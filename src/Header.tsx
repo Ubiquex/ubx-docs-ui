@@ -37,6 +37,7 @@ export function Header({
   tabs,
   activeTab,
   mobileMenu,
+  search,
 }: {
   nav: NavLink[];
   /** Omit entirely for a single-tier header, which is the provider site. */
@@ -44,6 +45,16 @@ export function Header({
   /** href of the active tab, matched by prefix so nested pages stay lit. */
   activeTab?: string;
   mobileMenu?: React.ReactNode;
+  /**
+   * Search control, rendered to the left of the theme toggle.
+   *
+   * In the header rather than in page content because the alternative
+   * put it on exactly one page type per site: the provider site's home
+   * page, and the user docs site's section landing pages, which are the
+   * pages being removed. Every content page on both sites had no way to
+   * search at all.
+   */
+  search?: React.ReactNode;
 }) {
   return (
     <header className="border-b border-border bg-background">
@@ -76,6 +87,7 @@ export function Header({
           })}
         </nav>
 
+        {search ? <div className="w-40 shrink-0 sm:w-56 lg:w-64">{search}</div> : null}
         <ThemeToggle />
       </div>
 

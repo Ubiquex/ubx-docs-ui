@@ -95,6 +95,12 @@ const ALLOWED = new Map([
   ["System", "A theme choice. Site-neutral."],
   ["Light", "A theme choice. Site-neutral."],
   ["Dark", "A theme choice. Site-neutral."],
+  [
+    "Navigation",
+    "PageShell's default drawer heading. Names the thing itself rather " +
+      "than either site's subject matter, which is what made \"Services\" wrong. " +
+      "Both sites pass an explicit label anyway; this is the fallback.",
+  ],
 ]);
 
 test("every user-visible string is site-neutral", () => {
@@ -116,6 +122,16 @@ test("every user-visible string is site-neutral", () => {
     // array demonstrates.
     for (const m of s.matchAll(/\b(label|title|heading|text|caption)\s*:\s*"([^"]+)"/g)) {
       found.push([f, `${m[1]}:`, m[2]]);
+    }
+    // Default parameter values. A third shape, and the one that matters
+    // most, because a default is precisely a string a consuming site
+    // gets without asking for it. Found by inspection when PageShell
+    // introduced `sidebarLabel = "Navigation"` and all three scanners
+    // above reported the package clean.
+    for (const m of s.matchAll(
+      /\b(\w*(?:[Ll]abel|[Tt]itle|[Hh]eading|[Cc]aption|[Pp]laceholder|[Tt]ext))\s*=\s*"([^"]+)"/g,
+    )) {
+      found.push([f, `${m[1]}=`, m[2]]);
     }
   }
 
