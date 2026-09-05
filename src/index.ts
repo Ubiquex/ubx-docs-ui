@@ -17,3 +17,5 @@ export type { SearchEntry } from "./GlobalSearch";
 export { ThemeToggle } from "./ThemeToggle";
 export { Footer } from "./Footer";
 export { MobileSidebarToggle } from "./MobileSidebarToggle";
+export { PageShell, THEME_INIT_SCRIPT } from "./PageShell";
+export type { PageShellProps } from "./PageShell";
