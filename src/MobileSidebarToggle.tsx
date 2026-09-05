@@ -20,14 +20,39 @@ import { useEffect, useRef, useState } from "react";
 const TRANSITION_MS = 200;
 
 // UBI-247: takes the drawer contents as `children` rather than
-// constructing a ProviderSidebar itself. That coupling was the one thing
-// in this component that was not generic, and it is exactly the kind of
-// thing that would have been carried into @ubx/docs-ui unnoticed had the
-// extraction been done first against a single call site. The provider
-// site passes <ProviderSidebar .../>, this site passes <DocSidebar .../>,
-// and the open/close/transition/route-change behaviour below is
-// identical for both.
-export function MobileSidebarToggle({ children }: { children: React.ReactNode }) {
+// constructing a ProviderSidebar itself. The provider site passes
+// <ProviderSidebar .../>, this site passes <DocSidebar .../>, and the
+// open/close/transition/route-change behaviour below is identical for
+// both.
+//
+// This comment used to claim that the `children` coupling "was the one
+// thing in this component that was not generic." That was wrong, and it
+// is left recorded here rather than quietly deleted because the way it
+// was wrong is the useful part. Three strings a few lines below still
+// said "Services" and "service navigation", which is AWS provider
+// vocabulary: the provider site's mobile drawer holds a provider's
+// service groups. The user docs site's drawer holds documentation
+// pages, so it announced the wrong thing to every mobile reader and to
+// every screen reader.
+//
+// It survived because the extraction was audited per component by
+// reading each one, and reading is exactly what does not catch a
+// plausible-sounding noun. It was found later by mechanically
+// extracting every user-visible string literal in the package and
+// asking of each one whether it could be true on both sites. `label` is
+// required for the same reason Footer's props are: a default here is a
+// silent claim about which site you are.
+export function MobileSidebarToggle({
+  children,
+  label,
+}: {
+  children: React.ReactNode;
+  /**
+   * What this drawer contains, in the consuming site's own vocabulary.
+   * Used as the drawer heading and as the basis for both aria-labels.
+   */
+  label: string;
+}) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -81,7 +106,7 @@ export function MobileSidebarToggle({ children }: { children: React.ReactNode })
       <button
         type="button"
         onClick={open}
-        aria-label="Open service navigation"
+        aria-label={`Open ${label} navigation`}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-foreground-muted hover:bg-surface hover:text-primary lg:hidden"
       >
         <svg viewBox="0 0 20 20" width="20" height="20" fill="none" aria-hidden="true">
@@ -92,7 +117,7 @@ export function MobileSidebarToggle({ children }: { children: React.ReactNode })
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            aria-label="Close service navigation"
+            aria-label={`Close ${label} navigation`}
             onClick={close}
             className={
               "absolute inset-0 bg-foreground/40 transition-opacity duration-200 motion-reduce:transition-none " +
@@ -107,11 +132,11 @@ export function MobileSidebarToggle({ children }: { children: React.ReactNode })
             }
           >
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground">Services</span>
+              <span className="text-sm font-semibold text-foreground">{label}</span>
               <button
                 type="button"
                 onClick={close}
-                aria-label="Close service navigation"
+                aria-label={`Close ${label} navigation`}
                 className="flex h-8 w-8 items-center justify-center rounded text-foreground-muted hover:bg-surface hover:text-primary"
               >
                 <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">

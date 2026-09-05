@@ -19,6 +19,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - name: No component carries a specific site's identity
+        # Mechanical, because the per-component read-through that
+        # preceded it caught GlobalSearch and missed Footer and
+        # MobileSidebarToggle. See test/no-site-identity.test.mjs.
+        run: npm test
       - run: npm run build
       - name: Confirm "use client" survives compilation
         # tsc has historically moved or dropped leading directives. If it
