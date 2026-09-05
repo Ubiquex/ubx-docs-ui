@@ -20,7 +20,14 @@ jobs:
           cache: npm
           registry-url: "https://registry.npmjs.org"
       - run: npm ci
+      # publish.yml ran neither the typecheck nor the tests. It is
+      # dispatchable from any branch, so a package failing either
+      # could be published, and a published version is immutable.
+      - run: npm run typecheck
+      - run: npm test
       - run: npm run build
+      - name: The tarball about to be published is consumable
+        run: node scripts/check-package.mjs
       - name: Refuse to republish a version that already exists
         run: |
           set -euo pipefail
