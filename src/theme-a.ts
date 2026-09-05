@@ -95,6 +95,16 @@ export const themeA: ThemeRegistration = {
         // when the provider site's rendered code was diffed before and
         // after the swap.
         "variable.other.property",
+
+        // YAML and TOML mapping keys. UBI-247 slice 3: verified against
+        // real token output before being written, and the naive
+        // assumption was wrong in two ways. YAML keys carry BOTH
+        // entity.name.tag.yaml and string.unquoted.plain.out.yaml, so
+        // override 1 below (which exists for shell) was silently
+        // stripping every key in every CI example to plain. TOML keys
+        // are variable.other.key.toml, covered by nothing above.
+        "entity.name.tag",
+        "variable.other.key.toml",
       ],
       settings: { foreground: "var(--color-code-yellow)" },
     },
@@ -121,6 +131,25 @@ export const themeA: ThemeRegistration = {
     // reserves for real keywords and types.
     {
       scope: ["keyword.operator"],
+      settings: { foreground: "var(--color-foreground)" },
+    },
+
+    // OVERRIDE 5. The YAML grammar scopes a bare `on` as a boolean
+    // constant, not as a key, because YAML 1.1 really does treat `on` as
+    // true. In GitHub Actions `on:` is the trigger key and appears in
+    // essentially every CI example (25 of 29 YAML fences in these docs
+    // are Actions workflows), so leaving it green made one key in every
+    // file render as though it were a language keyword while its
+    // siblings were yellow.
+    //
+    // The grammar cannot distinguish the two, so this is a real
+    // trade-off rather than a clean fix: a genuine YAML boolean value
+    // now renders plain instead of green. Chosen deliberately, because
+    // in this corpus `on:` as a key is common and `true`/`false` as a
+    // scalar value is rare, and a wrongly-emphasised key is more
+    // misleading than an unemphasised boolean.
+    {
+      scope: ["constant.language.boolean.yaml"],
       settings: { foreground: "var(--color-foreground)" },
     },
 
@@ -153,6 +182,12 @@ export const SUPPORTED_LANGS = [
   "bash",
   "hcl",
   "json",
+  // Added UBI-247 slice 3, each verified token by token: yaml (29
+  // fences, concentrated in the Integrations section where CI config is
+  // the entire subject), toml, and dockerfile.
+  "yaml",
+  "toml",
+  "docker",
 ] as const;
 
 export type SupportedLang = (typeof SUPPORTED_LANGS)[number];
