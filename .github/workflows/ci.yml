@@ -25,6 +25,15 @@ jobs:
         # MobileSidebarToggle. See test/no-site-identity.test.mjs.
         run: npm test
       - run: npm run build
+      - name: The published tarball is consumable
+        # typecheck and build prove the source compiles. They say
+        # nothing about whether what reaches npm can be imported.
+        # files/main/types/exports are four hand-maintained claims
+        # tsc never validates, and this package is the shared
+        # dependency of two sites, so getting one wrong breaks both
+        # at once and cannot be fixed by reverting: a published
+        # version is immutable.
+        run: node scripts/check-package.mjs
       - name: Confirm "use client" survives compilation
         # tsc has historically moved or dropped leading directives. If it
         # does, the client components silently become server components
