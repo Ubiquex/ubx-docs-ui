@@ -1,0 +1,46 @@
+name: publish
+
+# Manual dispatch only, matching every other publishing repo in this org.
+# Requires an NPM_TOKEN repo secret.
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          registry-url: "https://registry.npmjs.org"
+      - run: npm ci
+      - run: npm run build
+      - name: Refuse to republish a version that already exists
+        run: |
+          set -euo pipefail
+          v="$(node -p "require('./package.json').version")"
+          live="$(curl -sf https://registry.npmjs.org/@ubx%2fdocs-ui | python3 -c "import json,sys; print(json.load(sys.stdin).get('dist-tags',{}).get('latest',''))" 2>/dev/null || echo "")"
+          echo "committed=$v live=${live:-<none>}"
+          if [ "$v" = "$live" ]; then
+            echo "version $v is already published; bump package.json first"
+            exit 1
+          fi
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Verify the real registry, not the exit status
+        run: |
+          set -euo pipefail
+          v="$(node -p "require('./package.json').version")"
+          for _ in $(seq 1 10); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/@ubx%2fdocs-ui/$v")"
+            [ "$code" = "200" ] && { echo "confirmed @ubx/docs-ui@$v on the registry"; exit 0; }
+            sleep 10
+          done
+          echo "published but not visible on the registry after 100s"; exit 1
