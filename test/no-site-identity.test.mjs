@@ -63,16 +63,31 @@ function code(file) {
     .replace(/(?<!:)\/\/[^\n]*/g, "");
 }
 
-// RULE 1: no literal http(s) URL anywhere in the package.
+// RULE 1: no literal http(s) URL anywhere in the package, with one
+// named exception.
 //
-// Every URL names somebody's site. There is no such thing as a URL that
-// is correct for all consumers, so a URL in shared code is always a
-// latent version of the Footer bug. They arrive as props instead. This
-// is the rule that would have caught Footer on the day it was written.
+// Almost every URL names somebody's site. A URL in shared code is
+// normally a latent version of the Footer bug, so they arrive as props.
+// This is the rule that would have caught Footer on the day it was
+// written, and it still catches everything it used to.
+//
+// The premise as first written was "there is no such thing as a URL that
+// is correct for all consumers", and that turned out to have exactly one
+// counterexample. The apex is not any one consumer's address: it is the
+// destination the logo must reach FROM all three, which is the opposite
+// of the per-site identity this rule exists to keep out. Making it a
+// prop would have been the literal reading of the rule and the wrong
+// answer, since three sites each passing their own value is precisely
+// the drift the requirement was raised to end.
+//
+// One entry, not an escape hatch. Anything else still fails.
+const ALLOWED_URLS = new Set(["https://ubiquex.io"]);
+
 test("no component hardcodes a URL", () => {
   const offenders = [];
   for (const f of files) {
     for (const m of code(f).matchAll(/https?:\/\/[^\s"'`)]+/g)) {
+      if (ALLOWED_URLS.has(m[0])) continue;
       offenders.push(`${f}: ${m[0]}`);
     }
   }

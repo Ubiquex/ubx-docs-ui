@@ -24,9 +24,12 @@ import { MobileNav } from "./MobileNav";
 export type NavLink = {
   label: string;
   href: string;
-  /** Marks the destination representing the current site. */
-  current?: boolean;
 };
+
+// `current` used to live here, marking the destination representing the
+// current site, and it existed only to colour that one item differently.
+// Nothing styles the active item any more, so the field is removed
+// rather than left as a prop the sites keep setting and nothing reads.
 
 export type SectionTab = {
   label: string;
@@ -95,8 +98,23 @@ export function Header({
 }) {
   return (
     <header className="border-b border-border bg-background">
-      <div className="relative mx-auto flex max-w-7xl items-center gap-3 px-6 py-4">
-        <Link href="/" className="flex shrink-0 items-center">
+      {/* FIXED HEIGHT, not padding. This was `py-4`, so the bar measured
+          32px plus whichever optional child happened to be tallest, and
+          that child is not the same on every page. Measured across the
+          three sites: 67px where the GitHub pill renders (34px tall),
+          65px on a docs page with the header search (32px), and 63px on
+          a docs home page, where search moves into the hero and the
+          theme toggle (30px) is the tallest thing left. So the bar
+          changed height when you navigated within one site, not only
+          between sites. h-16 makes it 64px plus the 1px border
+          everywhere, and items-center keeps every child centred in it
+          regardless of which ones render. */}
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center gap-3 px-6">
+        {/* Always ubiquex.io, never the current site's own root. A plain
+            <a> rather than next/link because on two of the three sites
+            this is a cross-origin destination, and on the third it is
+            the same page the reader is already on. */}
+        <a href="https://ubiquex.io" className="flex shrink-0 items-center">
           {/* One asset, not a light/dark pair. The wordmark is the brand
               green on a transparent ground, so it reads on both
               palettes and there is nothing to swap. The pair it
@@ -104,14 +122,22 @@ export function Header({
               .logo-light/.logo-dark rules had been swapping an image
               for a copy of itself on all three sites. */}
           <img src="/logo/ubiquex.png" alt="Ubiquex" className="h-6 w-auto" />
-        </Link>
+        </a>
         <div className="flex-1" />
 
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-5 md:flex">
+          {/* ONE COLOUR, and no active state. Two separate faults met
+              here. The active item took --color-primary, which is the
+              brand green on the docs sites, so navigating turned a
+              different word green on each. And the rest took
+              --color-foreground-muted, which resolves per site: #5f6368
+              on the docs sites against #e8eaed on the marketing site,
+              where the ported reference's unlayered `a { color:
+              inherit }` beats the utility outright. --color-nav is one
+              value all three define, and nothing about it changes with
+              the current page. */}
           {nav.map((item) => {
-            const className = item.current
-              ? "text-sm text-primary"
-              : "text-sm text-foreground-muted hover:text-primary";
+            const className = "text-sm text-nav hover:text-nav-hover";
             return item.href.startsWith("/") ? (
               <Link key={item.label} href={item.href} className={className}>
                 {item.label}

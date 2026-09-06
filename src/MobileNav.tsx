@@ -82,8 +82,9 @@ export function MobileNav({
     setTimeout(() => setMounted(false), TRANSITION_MS);
   }
 
-  const linkClass = (current?: boolean) =>
-    current ? "py-2 text-primary" : "py-2 text-foreground-muted hover:text-primary";
+  // Same rule as the desktop bar: one colour, and nothing changes with
+  // the current page.
+  const linkClass = "py-2 text-nav hover:text-nav-hover";
 
   return (
     <>
@@ -137,11 +138,11 @@ export function MobileNav({
             >
               {nav.map((item) =>
                 item.href.startsWith("/") ? (
-                  <Link key={item.label} href={item.href} onClick={close} className={linkClass(item.current)}>
+                  <Link key={item.label} href={item.href} onClick={close} className={linkClass}>
                     {item.label}
                   </Link>
                 ) : (
-                  <a key={item.label} href={item.href} onClick={close} className={linkClass(item.current)}>
+                  <a key={item.label} href={item.href} onClick={close} className={linkClass}>
                     {item.label}
                   </a>
                 ),
