@@ -30,7 +30,16 @@ export const themeA: ThemeRegistration = {
   type: "dark",
   colors: {
     "editor.foreground": "var(--color-foreground)",
-    "editor.background": "var(--color-code-bg)",
+    // Transparent, deliberately. Shiki puts this on the <pre> as an
+    // INLINE style, and an inline style beats any class the wrapper can
+    // apply. CodeBlock's own `[&_pre]:bg-transparent` was written to
+    // neutralise it and never could: it emits
+    // `.bg-transparent pre{background-color:#0000}`, a class selector,
+    // which loses to `style="background-color:..."` every time.
+    //
+    // So the code block's surface is the wrapper's job, one source of
+    // truth, and this theme only ever sets foreground colours.
+    "editor.background": "transparent",
   },
   tokenColors: [
     {
