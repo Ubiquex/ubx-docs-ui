@@ -19,6 +19,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      # `npm test` builds first via pretest, because the interaction tests
+      # import dist/ rather than src/: they exercise what consumers
+      # actually install, the same choice the "use client" check below
+      # already makes.
       - name: No component carries a specific site's identity
         # Mechanical, because the per-component read-through that
         # preceded it caught GlobalSearch and missed Footer and

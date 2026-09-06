@@ -20,7 +20,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "prepublishOnly": "npm run build",
     "test": "node --test \"test/**/*.test.mjs\"",
-    "check:package": "npm run build && node scripts/check-package.mjs"
+    "check:package": "npm run build && node scripts/check-package.mjs",
+    "pretest": "npm run build"
   },
   "peerDependencies": {
     "next": ">=15",
@@ -34,6 +35,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "jsdom": "^26.1.0",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
