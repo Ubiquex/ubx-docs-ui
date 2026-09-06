@@ -24,7 +24,7 @@ export async function CodeBlock({ code, lang }: { code: string; lang: string }) 
   // rather than being forced through a grammar built for something else.
   if (!isSupportedLang(lang)) {
     return (
-      <pre className="overflow-x-auto rounded-2xl bg-code p-4 text-sm leading-relaxed">
+      <pre className="overflow-x-auto rounded-2xl bg-code-bg p-4 text-sm leading-relaxed">
         <code className="font-mono-tabular text-foreground">{trimmed}</code>
       </pre>
     );
@@ -40,7 +40,7 @@ export async function CodeBlock({ code, lang }: { code: string; lang: string }) 
   // render, so the swap is invisible outside the token colors themselves.
   return (
     <div
-      className="overflow-x-auto rounded-2xl bg-code p-4 text-sm leading-relaxed [&_pre]:bg-transparent [&_pre]:m-0 [&_code]:font-mono-tabular"
+      className="overflow-x-auto rounded-2xl bg-code-bg p-4 text-sm leading-relaxed [&_pre]:m-0 [&_code]:font-mono-tabular"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
