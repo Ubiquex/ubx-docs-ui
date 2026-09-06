@@ -96,6 +96,12 @@ const ALLOWED = new Map([
   ["Light", "A theme choice. Site-neutral."],
   ["Dark", "A theme choice. Site-neutral."],
   [
+    "Star us on GitHub",
+    "Says what the button does, not whose repo it is. The URL is a prop, " +
+      "so no site's identity is baked in. Flagged by this scan when it was " +
+      "added, which is the scan working rather than a false positive.",
+  ],
+  [
     "Navigation",
     "PageShell's default drawer heading. Names the thing itself rather " +
       "than either site's subject matter, which is what made \"Services\" wrong. " +

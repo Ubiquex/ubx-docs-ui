@@ -76,6 +76,8 @@ export type PageShellProps = {
   intro?: React.ReactNode;
   /** See Header's own showThemeToggle. Default true. */
   showThemeToggle?: boolean;
+  /** See Header's own githubUrl. Omitted means no button. */
+  githubUrl?: string;
   /** Footer identity. Required for the reason stated on Footer itself. */
   footer: {
     tagline: React.ReactNode;
@@ -104,6 +106,7 @@ export function PageShell({
   searchPlacement = "header",
   intro,
   showThemeToggle = true,
+  githubUrl,
   footer,
   children,
 }: PageShellProps) {
@@ -127,6 +130,7 @@ export function PageShell({
         activeTab={activeTab}
         search={headerSearch}
         showThemeToggle={showThemeToggle}
+        githubUrl={githubUrl}
         mobileMenu={
           sidebar ? (
             <MobileSidebarToggle label={sidebarLabel}>{sidebar}</MobileSidebarToggle>
