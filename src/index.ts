@@ -19,3 +19,5 @@ export { PageShell, THEME_INIT_SCRIPT } from "./PageShell";
 export type { PageShellProps } from "./PageShell";
 export { MobileNav } from "./MobileNav";
 export { SidebarSection, SidebarItemList, sidebarItemClass } from "./Sidebar";
+export { CodeTabs } from "./CodeTabs";
+export type { CodeTab, CodeTabsClassNames } from "./CodeTabs";
