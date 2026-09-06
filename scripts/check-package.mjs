@@ -78,6 +78,23 @@ for (const m of index.matchAll(/from\s+"\.\/([A-Za-z0-9_-]+)"/g)) {
   }
 }
 
+// 4. A declared licence must actually ship.
+//
+// package.json said "license": "Apache-2.0" and the repo had no LICENSE
+// file, so every published version of this package claimed a licence it
+// did not include. npm adds LICENSE to the tarball automatically once it
+// exists, even with a restrictive `files`, so the only thing that was
+// missing was the file itself. Nothing surfaced it: npm does not warn,
+// and the declaration alone is what most tooling reads.
+if (pkg.license && !pkg.private) {
+  const hasLicence = [...shipped].some((f) => /^LICEN[CS]E(\.|$)/i.test(f));
+  if (!hasLicence) {
+    problems.push(
+      `package.json declares "license": "${pkg.license}" but no LICENSE file is in the tarball`,
+    );
+  }
+}
+
 console.log(`tarball: ${shipped.size} files, ${(packed[0].size / 1024).toFixed(1)} kB`);
 console.log(`checked ${claims.length} manifest path claims and ${sources.length} source modules`);
 
