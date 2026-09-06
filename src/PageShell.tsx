@@ -78,6 +78,19 @@ export type PageShellProps = {
   showThemeToggle?: boolean;
   /** See Header's own githubUrl. Omitted means no button. */
   githubUrl?: string;
+  /**
+   * Render children edge to edge, with no centred, padded main column.
+   *
+   * The default wraps children in `mx-auto max-w-7xl px-6 py-12`, which
+   * is right for a docs page and wrong for a page built from full bleed
+   * tone bands: it caps every band at 1280px and insets it 24px, so the
+   * bands stop reaching the viewport edges and the alternating tones
+   * read as boxes rather than bands.
+   *
+   * ubiquex.io's home page is built that way, so it opts out and owns
+   * its own inner width. Both docs sites are unaffected.
+   */
+  fullBleed?: boolean;
   /** Footer identity. Required for the reason stated on Footer itself. */
   footer: {
     tagline: React.ReactNode;
@@ -107,6 +120,7 @@ export function PageShell({
   intro,
   showThemeToggle = true,
   githubUrl,
+  fullBleed = false,
   footer,
   children,
 }: PageShellProps) {
@@ -145,6 +159,12 @@ export function PageShell({
           <aside className="hidden w-64 shrink-0 lg:block">{sidebar}</aside>
           <main className="min-w-0 flex-1">{children}</main>
         </div>
+      ) : fullBleed ? (
+        <main className="flex-1">
+          {intro}
+          {heroSearch}
+          {children}
+        </main>
       ) : (
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-12">
           {intro}
