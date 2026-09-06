@@ -52,6 +52,28 @@ export type PageShellProps = {
    * both, and leaving it configurable would just re-open the drift.
    */
   searchPlaceholder?: string;
+  /**
+   * Where the search box goes.
+   *
+   * "header" is right for a content page: search is a persistent tool
+   * next to the theme toggle, out of the way of the page's own subject.
+   * "hero" is right for a landing page, where search IS the subject and
+   * the page has room to say so.
+   *
+   * A prop on the shell rather than two different pages assembling it,
+   * because the difference is one of arrangement, not of components.
+   * Both placements use the same GlobalSearch and the same tokens.
+   */
+  searchPlacement?: "header" | "hero";
+  /**
+   * Heading and lede, rendered above a hero search box.
+   *
+   * Only meaningful with searchPlacement "hero": the search sits between
+   * the intro and `children`, and the shell cannot slot itself into the
+   * middle of content it does not own. On a header-search page put the
+   * heading in `children` as normal.
+   */
+  intro?: React.ReactNode;
   /** Footer identity. Required for the reason stated on Footer itself. */
   footer: {
     tagline: React.ReactNode;
@@ -60,9 +82,14 @@ export type PageShellProps = {
   children: React.ReactNode;
 };
 
-/** Shared header search styling. See searchPlaceholder above. */
-const SEARCH_INPUT_CLASS =
+/** Compact, for sitting beside the theme toggle. */
+const HEADER_SEARCH_CLASS =
   "w-full rounded-full bg-field px-4 py-1.5 text-sm text-foreground outline-none " +
+  "placeholder:text-foreground-muted focus:ring-2 focus:ring-primary/30";
+
+/** Full size, for a landing page where search is the point. */
+const HERO_SEARCH_CLASS =
+  "w-full rounded-full bg-field px-5 py-3 text-base text-foreground outline-none " +
   "placeholder:text-foreground-muted focus:ring-2 focus:ring-primary/30";
 
 export function PageShell({
@@ -72,12 +99,22 @@ export function PageShell({
   sidebar,
   sidebarLabel = "Navigation",
   searchPlaceholder,
+  searchPlacement = "header",
+  intro,
   footer,
   children,
 }: PageShellProps) {
-  const search = searchPlaceholder ? (
-    <GlobalSearch placeholder={searchPlaceholder} inputClassName={SEARCH_INPUT_CLASS} />
-  ) : undefined;
+  const headerSearch =
+    searchPlaceholder && searchPlacement === "header" ? (
+      <GlobalSearch placeholder={searchPlaceholder} inputClassName={HEADER_SEARCH_CLASS} />
+    ) : undefined;
+
+  const heroSearch =
+    searchPlaceholder && searchPlacement === "hero" ? (
+      <div className="mx-auto mt-8 max-w-xl">
+        <GlobalSearch placeholder={searchPlaceholder} inputClassName={HERO_SEARCH_CLASS} />
+      </div>
+    ) : null;
 
   return (
     <>
@@ -85,7 +122,7 @@ export function PageShell({
         nav={nav}
         tabs={tabs}
         activeTab={activeTab}
-        search={search}
+        search={headerSearch}
         mobileMenu={
           sidebar ? (
             <MobileSidebarToggle label={sidebarLabel}>{sidebar}</MobileSidebarToggle>
@@ -94,12 +131,18 @@ export function PageShell({
       />
 
       {sidebar ? (
+        // No intro or hero search here on purpose: a page with a sidebar
+        // is a content page, and a hero belongs to a landing page.
         <div className="mx-auto flex w-full max-w-7xl flex-1 gap-10 px-6 py-10">
           <aside className="hidden w-64 shrink-0 lg:block">{sidebar}</aside>
           <main className="min-w-0 flex-1">{children}</main>
         </div>
       ) : (
-        <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-12">{children}</main>
+        <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-12">
+          {intro}
+          {heroSearch}
+          {children}
+        </main>
       )}
 
       <Footer tagline={footer.tagline} links={footer.links} />
