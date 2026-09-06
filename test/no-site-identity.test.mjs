@@ -91,6 +91,15 @@ test("no component hardcodes a URL", () => {
 // the word "Services".
 const ALLOWED = new Map([
   ["ubx", "The product name. Identical on every ubx docs site."],
+  [
+    "Ubiquex",
+    "Alt text for the shared brand wordmark, which is one asset at one " +
+      "path on all three sites. This is the company's identity, not any " +
+      "single site's: the scan exists to stop the provider site's or the " +
+      "user docs site's own name reaching shared code, and a mark common " +
+      "to all three is the opposite of that. Flagged when the logo pair " +
+      "collapsed to one asset, which is the scan working.",
+  ],
   ["Theme", "Names the light/dark control itself, not any site's content."],
   ["System", "A theme choice. Site-neutral."],
   ["Light", "A theme choice. Site-neutral."],
@@ -202,9 +211,29 @@ test("the scanners still actually see strings", () => {
     for (const m of s.matchAll(/(aria-label|title|placeholder|alt)="([^"]+)"/g)) seen.push(m[2]);
     for (const m of s.matchAll(/\b(label|title|heading|text|caption)\s*:\s*"([^"]+)"/g)) seen.push(m[2]);
   }
-  for (const known of ["ubx", "Theme", "System"]) {
+  assert.ok(seen.length > 0, "the scanners matched nothing at all in src/");
+
+  // Against a synthetic sample, not against whatever strings the real
+  // components happen to contain today. This assertion used to require
+  // that "ubx" was still findable in src/, which was true only because
+  // one component carried alt="ubx". Collapsing the logo pair to a
+  // single asset changed that alt text and broke the guard-on-the-guard,
+  // reporting a scanner fault where there was none. A positive control
+  // must not depend on product content it does not own, which is the
+  // same reasoning rule 1's canary above was already built on.
+  const sample = [
+    'const a = <span title="Held Title">Held Body</span>;',
+    'const b = { label: "Held Label" };',
+    'const c = <img alt="Held Alt" />;',
+  ].join("\n");
+  const found = [];
+  for (const m of sample.matchAll(/(?<!=)>\s*([A-Za-z][^<>{}\n]*?)\s*</g)) found.push(m[1].trim());
+  for (const m of sample.matchAll(/(aria-label|title|placeholder|alt)="([^"]+)"/g)) found.push(m[2]);
+  for (const m of sample.matchAll(/\b(label|title|heading|text|caption)\s*:\s*"([^"]+)"/g)) found.push(m[2]);
+
+  for (const known of ["Held Body", "Held Title", "Held Label", "Held Alt"]) {
     assert.ok(
-      seen.includes(known),
+      found.includes(known),
       `scanner no longer finds ${known}, so the checks above are passing vacuously`,
     );
   }

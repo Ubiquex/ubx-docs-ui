@@ -37,7 +37,8 @@ export function Header({
   nav,
   tabs,
   activeTab,
-  mobileMenu,
+  sidebar,
+  sidebarLabel,
   search,
   showThemeToggle = true,
   githubUrl,
@@ -47,7 +48,13 @@ export function Header({
   tabs?: SectionTab[];
   /** href of the active tab, matched by prefix so nested pages stay lit. */
   activeTab?: string;
-  mobileMenu?: React.ReactNode;
+  /**
+   * The section tree, when the page has one. Goes into the mobile
+   * drawer; the desktop rail is PageShell's, not the header's.
+   */
+  sidebar?: React.ReactNode;
+  /** Heading for the tree inside the drawer, in the site's own words. */
+  sidebarLabel?: string;
   /**
    * Search control, rendered to the left of the theme toggle.
    *
@@ -89,14 +96,14 @@ export function Header({
   return (
     <header className="border-b border-border bg-background">
       <div className="relative mx-auto flex max-w-7xl items-center gap-3 px-6 py-4">
-        {mobileMenu}
         <Link href="/" className="flex shrink-0 items-center">
-          {/* Both variants always render; globals.css's own
-              .logo-light/.logo-dark rules pick one via [data-theme], so
-              the swap needs zero client JS. Same contract as the
-              provider site. */}
-          <img src="/logo/logo.png" alt="ubx" className="logo-light h-6 w-auto" />
-          <img src="/logo/logo-dark.png" alt="ubx" className="logo-dark h-6 w-auto" />
+          {/* One asset, not a light/dark pair. The wordmark is the brand
+              green on a transparent ground, so it reads on both
+              palettes and there is nothing to swap. The pair it
+              replaced was two byte-identical files, which meant the
+              .logo-light/.logo-dark rules had been swapping an image
+              for a copy of itself on all three sites. */}
+          <img src="/logo/ubiquex.png" alt="Ubiquex" className="h-6 w-auto" />
         </Link>
         <div className="flex-1" />
 
@@ -129,8 +136,18 @@ export function Header({
             Star us on GitHub
           </a>
         ) : null}
-        {showThemeToggle ? <ThemeToggle /> : null}
-        <MobileNav nav={nav} githubUrl={githubUrl} />
+        {showThemeToggle ? (
+          <div className="hidden md:block">
+            <ThemeToggle />
+          </div>
+        ) : null}
+        <MobileNav
+          nav={nav}
+          githubUrl={githubUrl}
+          sidebar={sidebar}
+          sidebarLabel={sidebarLabel}
+          showThemeToggle={showThemeToggle}
+        />
       </div>
 
       {tabs && tabs.length > 0 ? (

@@ -1,22 +1,53 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { NavLink } from "./Header";
+import { ThemeToggle } from "./ThemeToggle";
 
-// The header's destination nav is `hidden md:flex`, so below 768px it was
-// simply gone. Measured on all three sites: navDisplay "none", and the
-// only visible header link was the logo. There was no route to Install,
-// Documentation, Tutorials, Providers or Blog on a phone, anywhere.
+// The one mobile navigation control on all three sites.
 //
-// Same two-state open/close as MobileSidebarToggle, and for the same
-// reason: closing flips `visible` immediately so the transition can play,
-// and the drawer only leaves the DOM once it has had time to finish.
+// It used to be two. The header's destination nav is `hidden md:flex`,
+// so below 768px it was gone, and this drawer was added to reach it.
+// But the docs sites ALSO rendered MobileSidebarToggle, a second burger
+// on the left opening a second drawer, for the section tree. A reader on
+// a phone met two hamburger buttons that looked identical, opened from
+// opposite edges, and each held half the navigation.
+//
+// So this component now holds both: destinations first, then the section
+// tree when the page has one. MobileSidebarToggle is gone rather than
+// kept alongside, because two implementations of one drawer is how the
+// two drifted in the first place.
+//
+// Opens DOWNWARD from below the header rather than in from an edge. A
+// side sheet reads as a separate surface that arrived over the page; a
+// panel dropping from the bar reads as the bar itself expanding, which
+// is what it is.
 const TRANSITION_MS = 200;
 
-export function MobileNav({ nav, githubUrl }: { nav: NavLink[]; githubUrl?: string }) {
+export function MobileNav({
+  nav,
+  githubUrl,
+  sidebar,
+  sidebarLabel,
+  showThemeToggle = true,
+}: {
+  nav: NavLink[];
+  githubUrl?: string;
+  /** The section tree, when the page has one. Rendered below the destinations. */
+  sidebar?: React.ReactNode;
+  sidebarLabel?: string;
+  showThemeToggle?: boolean;
+}) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
+  // Where the header actually ends, measured rather than assumed. The
+  // header is one tier on the marketing site and two on the docs sites
+  // (destinations plus a section tab strip), and a hardcoded offset
+  // would drop the panel over the tab strip on exactly the sites that
+  // have one.
+  const [top, setTop] = useState(0);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!mounted) return;
@@ -25,35 +56,64 @@ export function MobileNav({ nav, githubUrl }: { nav: NavLink[]; githubUrl?: stri
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") close();
     };
+    // Re-measure on resize: rotating a phone changes the header's
+    // height whenever anything in it wraps.
+    const onResize = () => {
+      const header = buttonRef.current?.closest("header");
+      if (header) setTop(header.getBoundingClientRect().bottom);
+    };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    window.addEventListener("resize", onResize);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      window.removeEventListener("resize", onResize);
+    };
   }, [mounted]);
 
   function open() {
+    const header = buttonRef.current?.closest("header");
+    setTop(header ? header.getBoundingClientRect().bottom : 0);
     setMounted(true);
     requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
   }
+
   function close() {
     setVisible(false);
     setTimeout(() => setMounted(false), TRANSITION_MS);
   }
 
+  const linkClass = (current?: boolean) =>
+    current ? "py-2 text-primary" : "py-2 text-foreground-muted hover:text-primary";
+
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={open}
-        aria-label="Open navigation"
+        onClick={mounted ? close : open}
+        aria-label={mounted ? "Close navigation" : "Open navigation"}
         aria-expanded={mounted}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded text-foreground-muted hover:bg-surface hover:text-primary md:hidden"
       >
-        <svg viewBox="0 0 20 20" width="20" height="20" fill="none" aria-hidden="true">
-          <path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        </svg>
+        {mounted ? (
+          <svg viewBox="0 0 20 20" width="20" height="20" fill="none" aria-hidden="true">
+            <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 20 20" width="20" height="20" fill="none" aria-hidden="true">
+            <path d="M3 5.5h14M3 10h14M3 14.5h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        )}
       </button>
 
       {mounted && (
-        <div role="dialog" aria-modal="true" aria-label="Navigation" className="fixed inset-0 z-50 md:hidden">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation"
+          className="fixed inset-x-0 bottom-0 z-50 md:hidden"
+          style={{ top }}
+        >
           <button
             type="button"
             aria-label="Close navigation"
@@ -63,52 +123,65 @@ export function MobileNav({ nav, githubUrl }: { nav: NavLink[]; githubUrl?: stri
               (visible ? "opacity-100" : "opacity-0")
             }
           />
-          <div
-            className={
-              "absolute inset-y-0 right-0 flex w-72 max-w-[85vw] flex-col gap-1 overflow-y-auto bg-background p-5 shadow-lg " +
-              "transition-transform duration-200 ease-out motion-reduce:transition-none " +
-              (visible ? "translate-x-0" : "translate-x-full")
-            }
-          >
-            <button
-              type="button"
-              onClick={close}
-              aria-label="Close navigation"
-              className="mb-3 flex h-8 w-8 items-center justify-center self-end rounded text-foreground-muted hover:bg-surface hover:text-primary"
+          {/* The clip. The panel below translates up by its own height
+              when closed, and this box is what hides it while it does,
+              so it slides out from behind the header rather than
+              appearing over it. */}
+          <div className="absolute inset-x-0 top-0 max-h-full overflow-hidden">
+            <div
+              className={
+                "flex max-h-[calc(100vh-8rem)] flex-col gap-1 overflow-y-auto border-b border-border bg-background px-6 pt-4 pb-6 shadow-lg " +
+                "transition-transform duration-200 ease-out motion-reduce:transition-none " +
+                (visible ? "translate-y-0" : "-translate-y-full")
+              }
             >
-              <svg viewBox="0 0 16 16" width="16" height="16" fill="none" aria-hidden="true">
-                <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            </button>
-            {nav.map((item) =>
-              item.href.startsWith("/") ? (
-                <Link
-                  key={item.label}
-                  href={item.href}
-                  onClick={close}
-                  className={item.current ? "py-2 text-primary" : "py-2 text-foreground-muted hover:text-primary"}
-                >
-                  {item.label}
-                </Link>
-              ) : (
+              {nav.map((item) =>
+                item.href.startsWith("/") ? (
+                  <Link key={item.label} href={item.href} onClick={close} className={linkClass(item.current)}>
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a key={item.label} href={item.href} onClick={close} className={linkClass(item.current)}>
+                    {item.label}
+                  </a>
+                ),
+              )}
+
+              {sidebar ? (
+                <div className="mt-4 border-t border-border pt-4">
+                  {sidebarLabel ? (
+                    <div className="mb-2 text-xs tracking-wide text-foreground-muted uppercase">
+                      {sidebarLabel}
+                    </div>
+                  ) : null}
+                  {/* Closes on any tap inside the tree. The tree is the
+                      consuming site's own component and knows nothing
+                      about this drawer, so the close is caught here by
+                      bubbling rather than wired into every link in it. */}
+                  <div onClick={close}>{sidebar}</div>
+                </div>
+              ) : null}
+
+              {githubUrl ? (
                 <a
-                  key={item.label}
-                  href={item.href}
-                  onClick={close}
-                  className={item.current ? "py-2 text-primary" : "py-2 text-foreground-muted hover:text-primary"}
+                  href={githubUrl}
+                  className="mt-4 rounded-full bg-primary px-4 py-2 text-center text-sm text-primary-foreground"
                 >
-                  {item.label}
+                  Star us on GitHub
                 </a>
-              ),
-            )}
-            {githubUrl ? (
-              <a
-                href={githubUrl}
-                className="mt-3 rounded-full bg-primary px-4 py-2 text-center text-sm text-primary-foreground"
-              >
-                Star us on GitHub
-              </a>
-            ) : null}
+              ) : null}
+
+              {/* The theme control lives here rather than in the bar.
+                  Three icons in a phone-width header crowded out the
+                  logo and the burger, and theme is a preference a reader
+                  sets once, not a destination. */}
+              {showThemeToggle ? (
+                <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+                  <span className="text-sm text-foreground-muted">Theme</span>
+                  <ThemeToggle />
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       )}

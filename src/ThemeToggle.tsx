@@ -2,11 +2,15 @@
 
 import { useSyncExternalStore } from "react";
 
-// Three real states: "light"/"dark" (an explicit, persisted choice --
-// see the inline script in app/layout.tsx for how it's applied before
-// paint) and "system" (no [data-theme] attribute at all, the original
-// prefers-color-scheme-only behavior this toggle adds onto rather than
-// replaces).
+// Three real states: "light"/"dark" (an explicit choice, applied as a
+// [data-theme] attribute) and "system" (no attribute at all, so
+// prefers-color-scheme decides).
+//
+// DARK IS THE DEFAULT. All three states are now written to storage,
+// including "system". That is the part worth reading twice: while the
+// default was "follow the OS", system could be the absence of a stored
+// value. Now that no stored value means dark, removing the key to mean
+// system would make the system button do nothing on the next load.
 type ThemeChoice = "system" | "light" | "dark";
 
 const STORAGE_KEY = "ubx-docs-theme";
@@ -38,6 +42,8 @@ function subscribe(callback: () => void) {
   };
 }
 
+const DEFAULT: ThemeChoice = "dark";
+
 function getSnapshot(): ThemeChoice {
   // Same real risk app/layout.tsx's own inline THEME_INIT_SCRIPT
   // already guards against for the identical read -- private
@@ -50,14 +56,18 @@ function getSnapshot(): ThemeChoice {
   // control.
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    return stored === "light" || stored === "dark" ? stored : "system";
+    return stored === "light" || stored === "dark" || stored === "system" ? stored : DEFAULT;
   } catch {
-    return "system";
+    return DEFAULT;
   }
 }
 
 function getServerSnapshot(): ThemeChoice {
-  return "system";
+  // The server has no localStorage, and this is also the correct first
+  // client answer: THEME_INIT_SCRIPT has already put the real
+  // data-theme on the document by the time this renders, so only this
+  // control's own highlight can lag, never the page.
+  return DEFAULT;
 }
 
 function SystemIcon() {
@@ -106,14 +116,17 @@ const OPTIONS: { choice: ThemeChoice; label: string; Icon: () => React.ReactElem
 // always visible -- replaces the earlier single cycling button (whose
 // current state was legible only from its text label, distinct icons
 // were the whole point of this pass).
+//
+// Rendered in the desktop header and, below md, inside the mobile
+// drawer instead. Three icons plus a logo, a burger and a call to
+// action did not fit a phone-width bar.
 export function ThemeToggle() {
   const choice = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   function choose(next: ThemeChoice) {
     applyTheme(next);
     try {
-      if (next === "system") window.localStorage.removeItem(STORAGE_KEY);
-      else window.localStorage.setItem(STORAGE_KEY, next);
+      window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
       // Storage blocked -- the choice still applies to this page via
       // applyTheme/data-theme above, it just will not persist across
