@@ -18,3 +18,4 @@ export { Footer } from "./Footer";
 export { PageShell, THEME_INIT_SCRIPT } from "./PageShell";
 export type { PageShellProps } from "./PageShell";
 export { MobileNav } from "./MobileNav";
+export { SidebarSection, SidebarItemList, sidebarItemClass } from "./Sidebar";
