@@ -2,7 +2,6 @@ import type React from "react";
 import { Header, type NavLink, type SectionTab } from "./Header";
 import { Footer } from "./Footer";
 import { GlobalSearch } from "./GlobalSearch";
-import { MobileSidebarToggle } from "./MobileSidebarToggle";
 
 // The page shell: header, optional sidebar rail, main column, footer.
 //
@@ -145,11 +144,8 @@ export function PageShell({
         search={headerSearch}
         showThemeToggle={showThemeToggle}
         githubUrl={githubUrl}
-        mobileMenu={
-          sidebar ? (
-            <MobileSidebarToggle label={sidebarLabel}>{sidebar}</MobileSidebarToggle>
-          ) : undefined
-        }
+        sidebar={sidebar}
+        sidebarLabel={sidebarLabel}
       />
 
       {sidebar ? (
@@ -179,23 +175,33 @@ export function PageShell({
 }
 
 /**
- * Sets data-theme from localStorage before paint.
+ * Sets data-theme before paint.
  *
  * Both sites carried this as a verbatim string constant in their own root
  * layout, which is duplication the package could not see. It has to be an
  * exported string rather than a component because it goes in <head> via
  * dangerouslySetInnerHTML and must run ahead of hydration: a React
  * component would run too late and the reader would see a flash of the
- * OS default before their stored choice applied.
+ * default before their stored choice applied.
  *
- * Absent or invalid storage leaves no attribute at all, which is exactly
- * "follow the OS".
+ * DARK IS THE DEFAULT, and absent storage now means dark rather than
+ * "follow the OS". The three sites are one product, and which one a
+ * reader saw first decided whether it was a dark product or a light one.
+ *
+ * "system" is still a real, selectable state; it is now an explicit
+ * stored choice rather than the absence of one. That distinction is why
+ * the key is written on every choice below rather than removed for
+ * system: with dark as the default, removing the key would mean dark,
+ * not system, and the option would silently do nothing.
  */
 export const THEME_INIT_SCRIPT = `(function () {
+  var stored = null;
   try {
-    var stored = window.localStorage.getItem("ubx-docs-theme");
-    if (stored === "light" || stored === "dark") {
-      document.documentElement.setAttribute("data-theme", stored);
-    }
+    stored = window.localStorage.getItem("ubx-docs-theme");
   } catch (e) {}
+  if (stored === "light" || stored === "dark") {
+    document.documentElement.setAttribute("data-theme", stored);
+  } else if (stored !== "system") {
+    document.documentElement.setAttribute("data-theme", "dark");
+  }
 })();`;
