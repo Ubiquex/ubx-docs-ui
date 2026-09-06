@@ -39,10 +39,25 @@ jobs:
         # does, the client components silently become server components
         # and every consuming site breaks at runtime rather than at build
         # time, which is the worst place to find out.
+        #
+        # The list is DERIVED from src/ rather than hardcoded. It used to
+        # name three components, and deleting one of them failed this
+        # step for a component that no longer existed. The same hardcoding
+        # would have silently skipped a NEWLY added client component,
+        # which is the worse direction to be wrong in: a green check on a
+        # file nobody was checking. The count assertion below is what
+        # stops this passing vacuously if the grep ever matches nothing.
         run: |
           set -euo pipefail
-          for f in ThemeToggle GlobalSearch MobileSidebarToggle; do
-            head -1 "dist/$f.js" | grep -q '"use client"' \
-              || { echo "dist/$f.js lost its \"use client\" directive"; exit 1; }
+          found=0
+          for src in src/*.tsx; do
+            head -1 "$src" | grep -q '"use client"' || continue
+            f="dist/$(basename "$src" .tsx).js"
+            [ -f "$f" ] || { echo "$f missing, but its source is a client component"; exit 1; }
+            head -1 "$f" | grep -q '"use client"' \
+              || { echo "$f lost its \"use client\" directive"; exit 1; }
             echo "ok $f"
+            found=$((found + 1))
           done
+          [ "$found" -gt 0 ] || { echo "no client components found in src/, so this check proved nothing"; exit 1; }
+          echo "checked $found client components"
