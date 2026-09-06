@@ -102,6 +102,14 @@ const ALLOWED = new Map([
       "added, which is the scan working rather than a false positive.",
   ],
   [
+    "Open navigation",
+    "Names the action, not the site. Same reasoning as Navigation below.",
+  ],
+  [
+    "Close navigation",
+    "Names the action, not the site.",
+  ],
+  [
     "Navigation",
     "PageShell's default drawer heading. Names the thing itself rather " +
       "than either site's subject matter, which is what made \"Services\" wrong. " +
@@ -116,7 +124,14 @@ test("every user-visible string is site-neutral", () => {
     // Text sitting directly between JSX tags. No length floor: "Services"
     // is 8 characters and a floor of 6 would still have caught it, but a
     // floor is an arbitrary hole and short labels are common.
-    for (const m of s.matchAll(/>\s*([A-Za-z][^<>{}\n]*?)\s*</g)) {
+    // The negative lookbehind is not decoration. Without it, an arrow
+    // function returning JSX (`(item) =>\n  item.href ? (<Link ...`)
+    // makes the ">" of "=>" read as a closing tag, and the JS expression
+    // after it reads as user-visible text. It reported
+    // `item.href.startsWith("/") ? (` as a string needing an allowlist
+    // entry, which is nonsense and would have taught the next person to
+    // allowlist code.
+    for (const m of s.matchAll(/(?<!=)>\s*([A-Za-z][^<>{}\n]*?)\s*</g)) {
       found.push([f, "jsx-text", m[1].trim()]);
     }
     // Attributes a screen reader or a tooltip surfaces to a person.
