@@ -74,6 +74,8 @@ export type PageShellProps = {
    * heading in `children` as normal.
    */
   intro?: React.ReactNode;
+  /** See Header's own showThemeToggle. Default true. */
+  showThemeToggle?: boolean;
   /** Footer identity. Required for the reason stated on Footer itself. */
   footer: {
     tagline: React.ReactNode;
@@ -101,6 +103,7 @@ export function PageShell({
   searchPlaceholder,
   searchPlacement = "header",
   intro,
+  showThemeToggle = true,
   footer,
   children,
 }: PageShellProps) {
@@ -123,6 +126,7 @@ export function PageShell({
         tabs={tabs}
         activeTab={activeTab}
         search={headerSearch}
+        showThemeToggle={showThemeToggle}
         mobileMenu={
           sidebar ? (
             <MobileSidebarToggle label={sidebarLabel}>{sidebar}</MobileSidebarToggle>

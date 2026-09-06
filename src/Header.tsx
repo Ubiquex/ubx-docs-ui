@@ -38,6 +38,7 @@ export function Header({
   activeTab,
   mobileMenu,
   search,
+  showThemeToggle = true,
 }: {
   nav: NavLink[];
   /** Omit entirely for a single-tier header, which is the provider site. */
@@ -55,6 +56,19 @@ export function Header({
    * search at all.
    */
   search?: React.ReactNode;
+  /**
+   * Render the theme toggle. Default true, which is every docs site.
+   *
+   * ubiquex-web opts out because it is dark-only: it defines no light
+   * palette and no [data-theme] rules, so a toggle there would switch
+   * between dark and dark. Shipping a control that does nothing is worse
+   * than not shipping it.
+   *
+   * This is a recorded compromise, not a design position. The real fix
+   * is a light palette for that site, at which point this prop should go
+   * away rather than being set to true.
+   */
+  showThemeToggle?: boolean;
 }) {
   return (
     <header className="border-b border-border bg-background">
@@ -88,7 +102,7 @@ export function Header({
         </nav>
 
         {search ? <div className="w-40 shrink-0 sm:w-56 lg:w-64">{search}</div> : null}
-        <ThemeToggle />
+        {showThemeToggle ? <ThemeToggle /> : null}
       </div>
 
       {tabs && tabs.length > 0 ? (
