@@ -82,6 +82,19 @@ export function MobileNav({
     setTimeout(() => setMounted(false), TRANSITION_MS);
   }
 
+  // Only an anchor with a real destination closes the drawer. Anything
+  // else inside the injected tree, a disclosure toggle, a filter input,
+  // a label, leaves it open so the reader can carry on navigating.
+  //
+  // `closest` rather than checking the target itself: a link's clickable
+  // area is usually a span or an svg inside it, so the target is rarely
+  // the anchor.
+  function onTreeClick(e: React.MouseEvent) {
+    const anchor = (e.target as Element | null)?.closest?.("a");
+    const href = anchor?.getAttribute("href");
+    if (href && href !== "#") close();
+  }
+
   // Same rule as the desktop bar: one colour, and nothing changes with
   // the current page.
   const linkClass = "py-2 text-nav hover:text-nav-hover";
@@ -155,11 +168,27 @@ export function MobileNav({
                       {sidebarLabel}
                     </div>
                   ) : null}
-                  {/* Closes on any tap inside the tree. The tree is the
-                      consuming site's own component and knows nothing
-                      about this drawer, so the close is caught here by
-                      bubbling rather than wired into every link in it. */}
-                  <div onClick={close}>{sidebar}</div>
+                  {/* Closes on NAVIGATION inside the tree, not on any tap.
+                      The tree is the consuming site's own component and
+                      knows nothing about this drawer, so the close is
+                      still caught here by bubbling rather than wired
+                      into every link. But this used to close on any
+                      click at all, and a tree is not only links.
+
+                      The provider site's service groups are <button>
+                      disclosure toggles. Tapping one ran its own handler,
+                      expanded the group, then bubbled to this element and
+                      unmounted the drawer in the same tick, so the group
+                      appeared to do nothing and no resource page was
+                      reachable from a phone at all. Worse on reopening:
+                      the drawer's sidebar is a separate instance from the
+                      desktop rail, so its open-group state went with the
+                      unmount and the group was collapsed again.
+
+                      Closing the drawer is what a reader wants when they
+                      have chosen a destination. A toggle is not a
+                      destination, so only an anchor counts. */}
+                  <div onClick={onTreeClick}>{sidebar}</div>
                 </div>
               ) : null}
 
